@@ -5,17 +5,24 @@
 </head>
 
 <body>
-<h1>Loading...</h1>
-<p1 id="test1"></p1>
-<p1 id="test2"></p1>
-<script>document.getElementById("test1").innerHTML = "window.location.href" + window.location.href;</script>
-<script>document.getElementById("test2").innerHTML = "window.location.pathname" + window.location.pathname;</script>
+<p id="status"></p>
+<p>This may take a minute</p>
+<script>
+if (window.location.hash) {
+  var hash = window.location.hash.substr(1)
+  //check hash is valid
+  document.getElementById("status").innerHTML = "Loading: " + hash
+} else {
+  console.log("no hash")
+  //prompt to enter hash or magnet link
+}
+</script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/webtorrent@0.107.17/webtorrent.min.js"></script>
 <script>
 $(function() {//Wait for scripts to download
   var magnetbase = 'magnet:?dn=index.html&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&tr=wss%3A%2F%2Ftracker.webtorrent.io&xt=urn:btih:'
-  var magnet = magnetbase + '077f8b86b2a98077b7fe5a51dd134f2d50996fd0'
+  var magnet = magnetbase + hash
   var client = new WebTorrent()
   client.add(magnet, function(torrent) {
     var file = torrent.files[0]
