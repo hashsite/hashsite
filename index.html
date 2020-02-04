@@ -5,34 +5,67 @@
 </head>
 
 <body>
-<p id="status"></p>
-<p>This may take a minute</p>
+  <h1>Open a website hosted on the BitTorrent network</h1>
+  
+  <p id="status"></p>
+  <p id="substatus"></p>
+  <div id="form">
+  Download from hash or magnet link.
+  <input onkeydown="submit(event)" type="text" id="textbox" placeholder="magnet:">
+  <button onclick="submit(event)" type="button">Download</button>
+  </div>
+
 <script>
-if (window.location.hash) {
-  var hash = window.location.hash.substr(1)
-  //check hash is valid
-  document.getElementById("status").innerHTML = "Loading: " + hash
-} else {
-  console.log("no hash")
-  //prompt to enter hash or magnet link
+function run(){
+  if (window.location.hash) {
+    if (window.location.hash.length == 41) {
+      document.getElementById("form").style.display = "none";
+      var hash = window.location.hash.substr(1);
+      document.getElementById("status").innerHTML = "Loading: " + hash;
+      document.getElementById("substatus").innerHTML = "This may take a minute.";
+      download(hash);
+    } else {
+      document.getElementById("status").innerHTML = "Invalid.  Hash length must be 40, not " + window.location.hash.substr(1).length + ".";
+    }
+  } else {
+    document.getElementById("status").innerHTML = "Enter a hash.";
+  }
+}
+run();
+
+function submit(event){
+  if ((event.key==='Enter') || (event.buttons===0)){
+  window.location.hash = document.getElementById("textbox").value;
+  run();
+  }
+}
+
+function download(hash){
+  if (window.jQuery){
+    downloadtorrent(hash);
+  } else {
+    console.log("Waiting 50ms for jQuery to load")
+    setTimeout(function() { download(hash) }, 50);
+  }
+}
+
+function downloadtorrent(hash) { //Wait for scripts to download
+    $(function() {
+      var magnetbase = 'magnet:?dn=index.html&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&tr=wss%3A%2F%2Ftracker.webtorrent.io&xt=urn:btih:';
+      var magnet = magnetbase + hash;
+      var client = new WebTorrent();
+      client.add(magnet, function(torrent) {
+        var file = torrent.files[0];
+        file.getBuffer(function(err, buffer) {
+          document.open();
+          document.write(buffer.toString());
+          document.close();
+        })
+      })
+    })
 }
 </script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/webtorrent@0.107.17/webtorrent.min.js"></script>
-<script>
-$(function() {//Wait for scripts to download
-  var magnetbase = 'magnet:?dn=index.html&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&tr=wss%3A%2F%2Ftracker.webtorrent.io&xt=urn:btih:'
-  var magnet = magnetbase + hash
-  var client = new WebTorrent()
-  client.add(magnet, function(torrent) {
-    var file = torrent.files[0]
-    file.getBuffer(function(err, buffer) {
-      document.open()
-      document.write(buffer.toString())
-      document.close()
-    })
-  })
-})
-</script>
 </body>
 </html>
