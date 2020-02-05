@@ -7,9 +7,9 @@
 3. Access it on https://hashsite.github.io/hashsite/#infohash
 
 #### To do:
-- Make magnet links work.
-- Check infohash is a hexadecimal.
 - Add a log.
-- Add some CSS.
+- Check infohash is base16.
+- Support Base32 infohash
 - Create and host a live demo.
+- Add some CSS.
 - Enable dynamic websites using technologies such as blockchains, zeronet, namecoin, etc.
