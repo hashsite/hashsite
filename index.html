@@ -6,26 +6,30 @@
 
 <body>
   <h1>Open a website hosted on the BitTorrent network</h1>
-  
   <p id="status"></p>
   <p id="substatus"></p>
   <div id="form">
-  Download from hash or magnet link.
-  <input onkeydown="submit(event)" type="text" id="textbox" placeholder="magnet:">
-  <button onclick="submit(event)" type="button">Download</button>
+    Download from hash or magnet link.
+    <input onkeydown="submit(event)" type="text" id="textbox" placeholder="magnet:">
+    <button onclick="submit(event)" type="button">Download</button>
   </div>
-
+    
 <script>
 function run(){
-  if (window.location.hash) {
-    if (window.location.hash.length == 41) {
-      document.getElementById("form").style.display = "none";
-      var hash = window.location.hash.substr(1);
-      document.getElementById("status").innerHTML = "Loading: " + hash;
-      document.getElementById("substatus").innerHTML = "This may take a minute.";
+  if (window.location.hash){
+    if (window.location.hash.substr(1,8) == "magnet:?"){
+      var hash = (window.location.hash.substr((window.location.hash.indexOf("xt=urn:btih:") + 12), 40))
       download(hash);
+      if (window.location.hash.indexOf("xt=urn:btmh:") != -1){
+        console.log("Multihash not supported.");
+      }
+    } else if (window.location.hash.length == 41){
+      var hash = window.location.hash.substr(1);
+      download(hash);
+    } else if (window.location.hash.length == 33){
+      console.log("Base32 not supported")
     } else {
-      document.getElementById("status").innerHTML = "Invalid.  Hash length must be 40, not " + window.location.hash.substr(1).length + ".";
+      document.getElementById("status").innerHTML = "Invalid entry";
     }
   } else {
     document.getElementById("status").innerHTML = "Enter a hash.";
@@ -41,15 +45,19 @@ function submit(event){
 }
 
 function download(hash){
+  document.getElementById("form").style.display = "none";
+  document.getElementById("status").innerHTML = "Loading: " + hash;
+  document.getElementById("substatus").innerHTML = "This may take a minute.";
+  wait(hash);
+}
+function wait(hash){
   if (window.jQuery){
     downloadtorrent(hash);
   } else {
-    console.log("Waiting 50ms for jQuery to load")
-    setTimeout(function() { download(hash) }, 50);
+    setTimeout(function() { wait(hash) }, 50);
   }
 }
-
-function downloadtorrent(hash) { //Wait for scripts to download
+function downloadtorrent(hash) {
     $(function() {
       var magnetbase = 'magnet:?dn=index.html&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&tr=wss%3A%2F%2Ftracker.webtorrent.io&xt=urn:btih:';
       var magnet = magnetbase + hash;
