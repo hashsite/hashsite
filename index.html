@@ -17,7 +17,7 @@
     <br>
     <p id="numpeers">Peers: 0</p>
     <p id="progress">Progress: 0%</p>
-    <p id="length">Size: loading...</p>
+    <p id="length">Size:</p>
     <p id="timeremaining">∞ remaining</p>
     <p><b><u>Magnet Parameters</u></b></p>
   </div>
@@ -33,7 +33,6 @@ function run(){
         node.appendChild(document.createTextNode(parameter));
         document.getElementById("log").appendChild(node);
       })
-      console.log(parameters)
       download(hash);
       if (window.location.hash.indexOf("xt=urn:btmh:") != -1){
         console.log("Multihash not supported.");
@@ -44,7 +43,7 @@ function run(){
     } else if (window.location.hash.length == 33){
       console.log("Base32 not supported")
     } else {
-      document.getElementById("status").innerHTML = "Invalid.";
+      document.getElementById("status").innerHTML = '<p style="color: red; font-weight: bold;">Invalid.</p>';
     }
   } else {
     
@@ -90,14 +89,17 @@ function downloadtorrent(hash){
       document.getElementById("length").innerHTML = "Size: "+torrent.length+"B";
       document.getElementById("timeremaining").innerHTML = Math.round(torrent.timeRemaining/1000)+" s remaining";
     }, 1000);
-    var file = torrent.files[0];
-    file.getBuffer(function(err, buffer){
-      clearInterval(progress);
-      document.open();
-      document.write(buffer.toString());
-      document.close();
-      
-    })
+    for (let i = 0; i < torrent.length; i++) {
+      var file = torrent.files[i];
+      if (file.name == "index.html") {
+        file.getBuffer(function(err, buffer){
+          clearInterval(progress);
+          document.open();
+          document.write(buffer.toString());
+          document.close();
+        })
+      }
+    }
   })
 }
 </script>
