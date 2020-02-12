@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Loading...</title>
+<title id="title">HashSite</title>
 </head>
 
 <body>
-  <h1>Open a website hosted on the BitTorrent network</h1>
+  <h1><a href="https://github.com/hashsite/hashsite">Open a website hosted on the BitTorrent network</a></h1>
   <p id="status"></p>
   <p id="substatus"></p>
   <div id="form">
-    <p>Download from hash or magnet link.</p>
-    <input onkeydown="submit(event)" type="text" id="textbox" placeholder="magnet:">
+    <p>Download from an infohash or magnet link.</p>
+    <input onkeydown="submit(event)" type="text" id="textbox" placeholder="magnet:" autocomplete="off">
     <button onclick="submit(event)" type="button">Download</button>
   </div>
   <div id="log">
@@ -18,39 +18,57 @@
     <p id="numpeers">Peers: 0</p>
     <p id="progress">Progress: 0%</p>
     <p id="length">Size:</p>
-    <p id="timeremaining">∞ remaining</p>
-    <p><b><u>Magnet Parameters</u></b></p>
+    <p id="timeremaining">Time remaining</p>
+    <p><b><u>Magnet parameters:</u></b></p>
   </div>
     
 <script>
+//create a global array of common wss trackers
+var trackers = ['wss%3A%2F%2Ftracker.btorrent.xyz', 'wss%3A%2F%2Ftracker.fastcast.nz', 'wss%3A%2F%2Ftracker.openwebtorrent.com', 'wss%3A%2F%2Ftracker.webtorrent.io'];
+
 function run(){
-  if (window.location.hash){
-    if (window.location.hash.substr(1,8) == "magnet:?"){
-      var hash = (window.location.hash.substr((window.location.hash.indexOf("xt=urn:btih:") + 12), 40))
-      var parameters = window.location.hash.substr(9).split("&")
+  var urlhash = window.location.hash
+  if (urlhash){
+    //check if the start is a magnet link
+    if (urlhash.substr(1,8) == "magnet:?"){
+      //get the infohash part of the magnet link
+      var hash = (urlhash.substr((urlhash.indexOf("xt=urn:btih:") + 12), 40));
+      //get the parameters part of the magnet link
+      var parameters = urlhash.substr(9).split("&");
+      //add each parameter to the log
       parameters.forEach(function(parameter){
+        //if parameter is a tracker, add it to the tracker array if not already
+        if (parameter.substr(0,3) == "tr="){
+          if (trackers.indexOf(parameter.substr(3)) == -1) {
+            trackers.push(parameter.substr(3))
+          }
+        }
         var node = document.createElement("li");
         node.appendChild(document.createTextNode(parameter));
         document.getElementById("log").appendChild(node);
       })
-      download(hash);
-      if (window.location.hash.indexOf("xt=urn:btmh:") != -1){
-        console.log("Multihash not supported.");
+      downloadhash(hash);
+      //check if the hash is in Multihash format
+      if (urlhash.indexOf("xt=urn:btmh:") != -1){
+        console.log("Multihash not supported");
       }
-    } else if (window.location.hash.length == 41){
-      var hash = window.location.hash.substr(1);
-      download(hash);
-    } else if (window.location.hash.length == 33){
-      console.log("Base32 not supported")
+    //check if the length matches a hexadecimal infohash
+    } else if (urlhash.length == 41){
+      var hash = urlhash.substr(1);
+      downloadhash(hash);
+    //check if the length matches a Base32 infohash
+    } else if (urlhash.length == 33){
+      console.log("Base32 not supported");
     } else {
       document.getElementById("status").innerHTML = '<p style="color: red; font-weight: bold;">Invalid.</p>';
     }
   } else {
-    
+    //no hash - do nothing
   }
 }
 run();
 
+//get the textbox data and put it into the url as a hash parameter
 function submit(event){
   if ((event.key==='Enter') || (event.buttons===0)){
   window.location.hash = document.getElementById("textbox").value.trim();
@@ -58,19 +76,15 @@ function submit(event){
   }
 }
 
-function progress(torrent){
-  document.getElementById("progress").innerHTML = "Progress: "+Math.round(torrent.progress*100)+"%";
-  document.getElementById("numpeers").innerHTML = "Peers: "+torrent.numPeers;
-  document.getElementById("length").innerHTML = "Size: "+torrent.length+"B";
-  document.getElementById("timeremaining").innerHTML = Math.round(torrent.timeRemaining/1000)+" s remaining";
-}
-
-function download(hash){
+//remove the download textbox/button etc.
+function downloadhash(hash){
+  document.getElementById("title").innerHTML = "Loading...";
   document.getElementById("form").style.display = "none";
   document.getElementById("status").innerHTML = "Loading: " + hash;
-  document.getElementById("substatus").innerHTML = "This may take a minute.";
+  document.getElementById("substatus").innerHTML = "This may take several seconds.  Refreshing the page can help if stuck.";
   wait(hash);
 }
+//wait untill the WebTorrent script has loaded
 function wait(hash){
   if (typeof WebTorrent !== 'undefined'){
     downloadtorrent(hash);
@@ -79,25 +93,40 @@ function wait(hash){
   }
 }
 function downloadtorrent(hash){
-  var magnetbase = 'magnet:?dn=index.html&tr=wss%3A%2F%2Ftracker.btorrent.xyz&tr=wss%3A%2F%2Ftracker.fastcast.nz&tr=wss%3A%2F%2Ftracker.openwebtorrent.com&tr=wss%3A%2F%2Ftracker.webtorrent.io&xt=urn:btih:';
-  var magnet = magnetbase + hash;
+  //start of the magnet URI
+  var magnet = 'magnet:?';
+  //add trackers
+  trackers.forEach(function(tracker) {
+    magnet += '&tr=' + tracker;
+  })
+  //add infohash parameter
+  magnet += '&xt=urn:btih:';
+  //add infohash
+  magnet += hash;
   var client = new WebTorrent();
   client.add(magnet, function(torrent){
+    //progress updates. usefull for large torrents
     var progress = setInterval(function(){
       document.getElementById("progress").innerHTML = "Progress: "+Math.round(torrent.progress*100)+"%";
       document.getElementById("numpeers").innerHTML = "Peers: "+torrent.numPeers;
       document.getElementById("length").innerHTML = "Size: "+torrent.length+"B";
       document.getElementById("timeremaining").innerHTML = Math.round(torrent.timeRemaining/1000)+" s remaining";
     }, 1000);
-    for (let i = 0; i < torrent.length; i++) {
+    //go through each file in the torrent
+    for (let i = 0; i < torrent.files.length; i++) {
       var file = torrent.files[i];
+      //look for index.html
       if (file.name == "index.html") {
         file.getBuffer(function(err, buffer){
+          //cancel the progress updates or else errors occur
           clearInterval(progress);
+          //Load index.html into the DOM
           document.open();
           document.write(buffer.toString());
           document.close();
         })
+        //break the for loop after index.html has been found
+        break;
       }
     }
   })
