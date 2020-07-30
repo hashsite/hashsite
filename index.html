@@ -103,7 +103,7 @@ function downloadtorrent(hash){
   magnet += '&xt=urn:btih:';
   //add infohash
   magnet += hash;
-  var client = new WebTorrent({tracker:{rtcConfig:{iceServers:[{urls: 'stun:23.21.150.121'},{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478?transport=udp'}]}}});
+  var client = new WebTorrent({tracker:{rtcConfig:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:global.stun.twilio.com:3478?transport=udp'}]}}});
   client.add(magnet, function(torrent){
     //progress updates. usefull for large torrents
     var progress = setInterval(function(){
