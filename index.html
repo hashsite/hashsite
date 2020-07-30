@@ -116,7 +116,7 @@ function downloadtorrent(hash){
     for (let i = 0; i < torrent.files.length; i++) {
       var file = torrent.files[i];
       //look for index.html
-      if (file.name == "index.html") {
+      if (file.name == "index") {
         file.getBuffer(function(err, buffer){
           //cancel the progress updates or else errors occur
           clearInterval(progress);
