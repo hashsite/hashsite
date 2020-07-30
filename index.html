@@ -27,7 +27,7 @@
 var trackers = ['wss%3A%2F%2Ftracker.fastcast.nz', 'wss%3A%2F%2Ftracker.openwebtorrent.com', 'wss%3A%2F%2Ftracker.webtorrent.io'];
 
 function run(){
-  var urlhash = window.location.hash
+  var urlhash = window.location.search
   if (urlhash){
     //check if the start is a magnet link
     if (urlhash.substr(1,8) == "magnet:?"){
@@ -71,7 +71,7 @@ run();
 //get the textbox data and put it into the url as a hash parameter
 function submit(event){
   if ((event.key==='Enter') || (event.buttons===0)){
-  window.location.hash = document.getElementById("textbox").value.trim();
+  window.location.search = document.getElementById("textbox").value.trim();
   run();
   }
 }
